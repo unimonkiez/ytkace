@@ -71,7 +71,7 @@ void YTKACEInstallFullscreenRightHooks(void) {
         UIButton *button = YTKACEOverlayButton(
             stack,
             @"YTKACE Fullscreen Right",
-            @"arrow.rectangle.rotate.right",
+            @"arrow.clockwise",
             YTKACEFullscreenRightController.sharedController,
             @selector(rotateToLandscapeRight:)
         );
