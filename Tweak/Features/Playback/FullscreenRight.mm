@@ -88,7 +88,9 @@ static UIView *YTKACEFullscreenRightOverlay;
     [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
     
     // Tell the view controller to update its orientation
-    [watchVC setNeedsUpdateOfSupportedInterfaceOrientations];
+    if ([watchVC respondsToSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)]) {
+        [watchVC performSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)];
+    }
     
     // Force attempt rotation
     [UIViewController attemptRotationToDeviceOrientation];
