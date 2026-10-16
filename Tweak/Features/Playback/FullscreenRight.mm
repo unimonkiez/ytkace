@@ -2,6 +2,8 @@
 #import "../../Runtime/Hooking.h"
 #import "../../Runtime/Preferences.h"
 
+#import <UIKit/UIKit.h>
+
 static IMP OriginalSupportedOrientations;
 static IMP OriginalPreferredOrientation;
 
