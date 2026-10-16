@@ -53,7 +53,7 @@ static UIView *YTKACEFullscreenRightOverlay;
     
     // Trigger rotation on the view controller
     if ([vc respondsToSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)]) {
-        [vc setNeedsUpdateOfSupportedInterfaceOrientations];
+        [vc performSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)];
     }
     
     // Also try to update the preferred orientation
