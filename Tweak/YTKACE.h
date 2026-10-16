@@ -30,6 +30,7 @@ void YTKACEInstallOLEDHooks(void);
 void YTKACEInstallStartupHooks(void);
 void YTKACEInstallPremiumLogoHooks(void);
 void YTKACEInstallBackgroundPlaybackHooks(void);
+void YTKACEInstallFullscreenRightHooks(void);
 void YTKACEInstallPiPHooks(void);
 void YTKACEInstallSpeedHooks(void);
 double YTKACEStartPlaybackRate(void);

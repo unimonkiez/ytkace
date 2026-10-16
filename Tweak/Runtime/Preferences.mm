@@ -64,6 +64,7 @@ void YTKACERegisterDefaults(void) {
         @"YTKACE.Preference.Playback.CustomDoubleTap": @NO,
         @"YTKACE.Preference.Playback.TapToSeek": @NO,
         @"YTKACE.Preference.Sharing.NativeSheet": @NO,
+        @"YTKACE.Preference.Playback.FullscreenRight": @NO,
         @"YTKACE.Preference.Playback.OpenPaused": @NO,
         @"YTKACE.Preference.Playback.Transcript": @NO,
         @"YTKACE.Preference.Downloads.Subtitles": @NO,

@@ -41,6 +41,7 @@ YTKACE_FILES = \
 	Tweak/Features/Appearance/PremiumLogoHooks.mm \
 	Tweak/Features/Queue/QueueHooks.mm \
 	Tweak/Features/Playback/BackgroundPlaybackHooks.mm \
+	Tweak/Features/Playback/FullscreenRight.mm \
 	Tweak/Features/Playback/PiPControls.mm \
 	Tweak/Features/Playback/PlaybackFixHooks.mm \
 	Tweak/Features/Playback/ChallengeSolver.mm \
