@@ -57,43 +57,103 @@ static UIView *YTKACEFullscreenRightOverlay;
 }
 
 - (void)rotateToLandscapeRight:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    
+    // Visual feedback - change button appearance
+    [UIView animateWithDuration:0.2 animations:^{
+        button.backgroundColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:0.3];
+        button.transform = CGAffineTransformMakeScale(1.2, 1.2);
+    }];
+    
     // Find the YTWatchViewController in the responder chain
     UIResponder *responder = YTKACEFullscreenRightOverlay;
     UIViewController *watchVC = nil;
     
+    NSMutableString *debugInfo = [NSMutableString stringWithString:@"Searching for VC...\n"];
+    
     while (responder) {
+        [debugInfo appendFormat:@"→ %@\n", NSStringFromClass([responder class])];
         if ([NSStringFromClass([responder class]) isEqualToString:@"YTWatchViewController"]) {
             watchVC = (UIViewController *)responder;
+            [debugInfo appendString:@"✓ Found YTWatchViewController!\n"];
             break;
         }
         responder = [responder nextResponder];
     }
     
     if (!watchVC) {
-        // Try to find any view controller
+        [debugInfo appendString:@"\nTrying any VC...\n"];
         responder = YTKACEFullscreenRightOverlay;
         while (responder) {
             if ([responder isKindOfClass:[UIViewController class]]) {
                 watchVC = (UIViewController *)responder;
+                [debugInfo appendFormat:@"✓ Found: %@\n", NSStringFromClass([watchVC class])];
                 break;
             }
             responder = [responder nextResponder];
         }
     }
     
-    if (!watchVC) return;
+    if (!watchVC) {
+        [debugInfo appendString:@"\n✗ No VC found!"];
+        [self showAlertWithTitle:@"Debug Info" message:debugInfo];
+        [UIView animateWithDuration:0.2 delay:0.5 options:0 animations:^{
+            button.backgroundColor = [UIColor clearColor];
+            button.transform = CGAffineTransformIdentity;
+        } completion:nil];
+        return;
+    }
+    
+    [debugInfo appendFormat:@"\n\nRotating to Landscape Right...\n"];
+    [debugInfo appendFormat:@"VC: %@\n", NSStringFromClass([watchVC class])];
     
     // Force rotation by setting device orientation
     NSNumber *value = @(UIInterfaceOrientationLandscapeRight);
     [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+    [debugInfo appendString:@"✓ Set device orientation\n"];
     
     // Tell the view controller to update its orientation
     if ([watchVC respondsToSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)]) {
         [watchVC performSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)];
+        [debugInfo appendString:@"✓ Called setNeedsUpdate\n"];
+    } else {
+        [debugInfo appendString:@"✗ No setNeedsUpdate method\n"];
     }
     
     // Force attempt rotation
     [UIViewController attemptRotationToDeviceOrientation];
+    [debugInfo appendString:@"✓ Attempted rotation"];
+    
+    // Show debug info
+    [self showAlertWithTitle:@"Rotation Debug" message:debugInfo];
+    
+    // Reset button appearance
+    [UIView animateWithDuration:0.2 delay:2.0 options:0 animations:^{
+        button.backgroundColor = [UIColor clearColor];
+        button.transform = CGAffineTransformIdentity;
+    } completion:nil];
+}
+
+- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIViewController *topVC = [self getTopViewController];
+        if (topVC) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                           message:message
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+            [topVC presentViewController:alert animated:YES completion:nil];
+        }
+    });
+}
+
+- (UIViewController *)getTopViewController {
+    UIWindow *window = [UIApplication sharedApplication].windows.firstObject;
+    UIViewController *topVC = window.rootViewController;
+    while (topVC.presentedViewController) {
+        topVC = topVC.presentedViewController;
+    }
+    return topVC;
 }
 
 @end
