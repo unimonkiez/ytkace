@@ -6,6 +6,7 @@
 
 static IMP OriginalSupportedOrientations;
 static IMP OriginalPreferredOrientation;
+static IMP OriginalShouldAutorotate;
 
 static UIInterfaceOrientationMask YTKACESupportedOrientations(id receiver, SEL selector) {
     if (YTKACEFeatureEnabled(@"YTKACE.Preference.Playback.FullscreenRight")) {
@@ -14,7 +15,7 @@ static UIInterfaceOrientationMask YTKACESupportedOrientations(id receiver, SEL s
     if (OriginalSupportedOrientations) {
         return ((UIInterfaceOrientationMask (*)(id, SEL))OriginalSupportedOrientations)(receiver, selector);
     }
-    return UIInterfaceOrientationMaskLandscapeLeft;
+    return UIInterfaceOrientationMaskAllButUpsideDown;
 }
 
 static UIInterfaceOrientation YTKACEPreferredOrientation(id receiver, SEL selector) {
@@ -25,6 +26,13 @@ static UIInterfaceOrientation YTKACEPreferredOrientation(id receiver, SEL select
         return ((UIInterfaceOrientation (*)(id, SEL))OriginalPreferredOrientation)(receiver, selector);
     }
     return UIInterfaceOrientationLandscapeLeft;
+}
+
+static BOOL YTKACEShouldAutorotate(id receiver, SEL selector) {
+    if (OriginalShouldAutorotate) {
+        return ((BOOL (*)(id, SEL))OriginalShouldAutorotate)(receiver, selector);
+    }
+    return YES;
 }
 
 void YTKACEInstallFullscreenRightHooks(void) {
@@ -46,5 +54,15 @@ void YTKACEInstallFullscreenRightHooks(void) {
                                @"preferredInterfaceOrientationForPresentation",
                                (IMP)YTKACEPreferredOrientation,
                                "q@:");
+    }
+    
+    if (!YTKACEInstallInstanceHook(@"YTWatchViewController",
+                                   @"shouldAutorotate",
+                                   (IMP)YTKACEShouldAutorotate,
+                                   &OriginalShouldAutorotate)) {
+        YTKACEAddInstanceMethod(@"YTWatchViewController",
+                               @"shouldAutorotate",
+                               (IMP)YTKACEShouldAutorotate,
+                               "B@:");
     }
 }
