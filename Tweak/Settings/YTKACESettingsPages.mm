@@ -1475,8 +1475,8 @@ static NSDictionary *YTKACEPlayerDefinition(void) {
                                 0.25, 5.0, 0.25, 2.0, @"speed")
         ],
         @[
-            YTKACEToggleDetail(@"Fullscreen to the right",
-                               @"Makes the player rotate to the right when going fullscreen.",
+            YTKACEToggleDetail(@"Show fullscreen to the right button",
+                               @"Adds a button next to the fullscreen button that rotates to landscape right.",
                                @"YTKACE.Preference.Playback.FullscreenRight"),
             YTKACEToggleDetail(@"Background Audio",
                                @"Keep playing when you leave the app or lock the screen.",
