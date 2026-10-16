@@ -6,6 +6,33 @@
 #import <UIKit/UIKit.h>
 #import <objc/message.h>
 
+static IMP OriginalSupportedOrientations;
+static IMP OriginalPreferredOrientation;
+
+static UIInterfaceOrientationMask YTKACESupportedOrientations(id self, SEL _cmd) {
+    if (YTKACEFeatureEnabled(@"YTKACE.Preference.Playback.FullscreenRight")) {
+        return UIInterfaceOrientationMaskLandscapeRight;
+    }
+    
+    if (OriginalSupportedOrientations) {
+        return ((UIInterfaceOrientationMask (*)(id, SEL))OriginalSupportedOrientations)(self, _cmd);
+    }
+    
+    return UIInterfaceOrientationMaskAllButUpsideDown;
+}
+
+static UIInterfaceOrientation YTKACEPreferredOrientation(id self, SEL _cmd) {
+    if (YTKACEFeatureEnabled(@"YTKACE.Preference.Playback.FullscreenRight")) {
+        return UIInterfaceOrientationLandscapeRight;
+    }
+    
+    if (OriginalPreferredOrientation) {
+        return ((UIInterfaceOrientation (*)(id, SEL))OriginalPreferredOrientation)(self, _cmd);
+    }
+    
+    return UIInterfaceOrientationLandscapeLeft;
+}
+
 static UIView *YTKACEFullscreenRightOverlay;
 
 @interface YTKACEFullscreenRightController : NSObject
@@ -29,43 +56,66 @@ static UIView *YTKACEFullscreenRightOverlay;
     YTKACEFullscreenRightOverlay = overlay;
 }
 
-- (UIViewController *)viewControllerForOverlay:(UIView *)overlay {
-    UIResponder *responder = overlay;
-    while (responder != nil) {
-        if ([responder isKindOfClass:UIViewController.class]) {
-            return (UIViewController *)responder;
-        }
-        responder = responder.nextResponder;
-    }
-    return nil;
-}
-
 - (void)rotateToLandscapeRight:(id)sender {
-    UIView *overlay = YTKACEFullscreenRightOverlay;
-    if (overlay == nil) return;
+    // Find the YTWatchViewController in the responder chain
+    UIResponder *responder = YTKACEFullscreenRightOverlay;
+    UIViewController *watchVC = nil;
     
-    UIViewController *vc = [self viewControllerForOverlay:overlay];
-    if (vc == nil) return;
-    
-    // Force rotation to landscape right by setting device orientation
-    NSNumber *landscapeRight = @(UIDeviceOrientationLandscapeRight);
-    [[UIDevice currentDevice] setValue:landscapeRight forKey:@"orientation"];
-    
-    // Trigger rotation on the view controller
-    if ([vc respondsToSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)]) {
-        [vc performSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)];
+    while (responder) {
+        if ([NSStringFromClass([responder class]) isEqualToString:@"YTWatchViewController"]) {
+            watchVC = (UIViewController *)responder;
+            break;
+        }
+        responder = [responder nextResponder];
     }
     
-    // Also try to update the preferred orientation
-    SEL attemptRotation = NSSelectorFromString(@"attemptRotationToDeviceOrientation");
-    if ([UIViewController respondsToSelector:attemptRotation]) {
-        ((void (*)(id, SEL))objc_msgSend)(UIViewController.class, attemptRotation);
+    if (!watchVC) {
+        // Try to find any view controller
+        responder = YTKACEFullscreenRightOverlay;
+        while (responder) {
+            if ([responder isKindOfClass:[UIViewController class]]) {
+                watchVC = (UIViewController *)responder;
+                break;
+            }
+            responder = [responder nextResponder];
+        }
     }
+    
+    if (!watchVC) return;
+    
+    // Force rotation by setting device orientation
+    NSNumber *value = @(UIInterfaceOrientationLandscapeRight);
+    [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+    
+    // Tell the view controller to update its orientation
+    [watchVC setNeedsUpdateOfSupportedInterfaceOrientations];
+    
+    // Force attempt rotation
+    [UIViewController attemptRotationToDeviceOrientation];
 }
 
 @end
 
 void YTKACEInstallFullscreenRightHooks(void) {
+    // Hook YTWatchViewController orientation methods
+    Class watchVCClass = NSClassFromString(@"YTWatchViewController");
+    if (watchVCClass) {
+        // Hook supportedInterfaceOrientations
+        Method supportedOrientationsMethod = class_getInstanceMethod(watchVCClass, @selector(supportedInterfaceOrientations));
+        if (supportedOrientationsMethod) {
+            OriginalSupportedOrientations = method_getImplementation(supportedOrientationsMethod);
+            method_setImplementation(supportedOrientationsMethod, (IMP)YTKACESupportedOrientations);
+        }
+        
+        // Hook preferredInterfaceOrientationForPresentation
+        Method preferredOrientationMethod = class_getInstanceMethod(watchVCClass, @selector(preferredInterfaceOrientationForPresentation));
+        if (preferredOrientationMethod) {
+            OriginalPreferredOrientation = method_getImplementation(preferredOrientationMethod);
+            method_setImplementation(preferredOrientationMethod, (IMP)YTKACEPreferredOrientation);
+        }
+    }
+    
+    // Add overlay button
     YTKACERegisterOverlayConfigurator(@"fullscreenright", ^(UIView *overlay, UIStackView *stack) {
         [YTKACEFullscreenRightController.sharedController setOverlay:overlay];
         UIButton *button = YTKACEOverlayButton(
