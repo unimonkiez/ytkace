@@ -52,10 +52,8 @@ static UIView *YTKACEFullscreenRightOverlay;
     [[UIDevice currentDevice] setValue:landscapeRight forKey:@"orientation"];
     
     // Trigger rotation on the view controller
-    if (@available(iOS 16.0, *)) {
-        if ([vc respondsToSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)]) {
-            [vc setNeedsUpdateOfSupportedInterfaceOrientations];
-        }
+    if ([vc respondsToSelector:@selector(setNeedsUpdateOfSupportedInterfaceOrientations)]) {
+        [vc setNeedsUpdateOfSupportedInterfaceOrientations];
     }
     
     // Also try to update the preferred orientation
